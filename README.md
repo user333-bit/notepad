@@ -24,4 +24,5 @@
 成品展示：🫡
 <img width="1440" height="698" alt="image" src="https://github.com/user-attachments/assets/103a032c-5248-45f0-8d79-0ba2f7bc6ba1" />
 <img width="1444" height="698" alt="image" src="https://github.com/user-attachments/assets/bf38a290-1d3d-4838-8ffd-372cc85ce936" />
-<img width="1440" height="785" alt="image" src="https://github.com/user-attachments/assets/fb63f2f9-2e45-456f-a583-ece033a8dff9" />
+<img width="1440" height="698" alt="image" src="https://github.com/user-attachments/assets/8cbc9a3b-af3d-40ac-9d4b-90274b092138" />
+
