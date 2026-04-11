@@ -1,6 +1,5 @@
 📓 网页笔记本：一个基于 Cloudflare Workers + KV 存储的超轻量私密笔记本。
 
-
 ✨ 功能特性
 - 📱 响应式设计：完美适配手机端，带有 iOS 风格交互。
 - 🔒 私密访问：内置密码访问锁，保护隐私。
@@ -8,7 +7,6 @@
 - ✎ 实时编辑：支持对已保存内容的二次修改。
 - 🗑 现代化删除：iOS 风格红色垃圾桶及二次确认弹窗。
 - ↕️ 智能排序：支持最新/最早排序，并自动同步偏好。
-
 
 🚀 快速部署教程：
 必做：1.打开dash.cloudflare.com
@@ -20,6 +18,10 @@
 7.将左侧代码全部替换为notepad code.js里的代码，并点右上角的部署
 8.打开存储和数据库-Workers KV
 9.点右上角Create Instance，命名空间名称填NOTES_KV
-10.回到Compute-Workers and Pages-notepad，点绑定，点添加绑定，点KV 命名空间，点添加绑定，变量名称填NOTES_KV，KV 命名空间选刚才创建的NOTES_KV，再点添加绑定
+10.回到Compute-Workers and Pages-notepad，点绑定，点添加绑定，点KV 命名空间，点添加绑定，变量名称填NOTES_KV，KV命名空间选刚才创建的NOTES_KV，点添加绑定
 11.点设置，找到变量和机密，点右边的添加：变量名称填PASSWORD 值填你想要的密码，然后点右下角部署
 选做：在设置里找到域和路由，点右边的添加：点自定义域，框里输入你的域名或子域名，然后点右下角添加域
+成品展示：🫡
+<img width="1440" height="698" alt="image" src="https://github.com/user-attachments/assets/103a032c-5248-45f0-8d79-0ba2f7bc6ba1" />
+<img width="1444" height="698" alt="image" src="https://github.com/user-attachments/assets/bf38a290-1d3d-4838-8ffd-372cc85ce936" />
+<img width="1440" height="785" alt="image" src="https://github.com/user-attachments/assets/fb63f2f9-2e45-456f-a583-ece033a8dff9" />
