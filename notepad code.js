@@ -14,7 +14,7 @@ export default {
       });
     }
 
-    if (method === "POST" && url.pathname === "/login") {
+    if (method === "POST") {
       const formData = await request.formData();
       if (formData.get("password") === PASSWORD) {
         return new Response("OK", {
@@ -22,11 +22,11 @@ export default {
           headers: { "Location": "/", "Set-Cookie": "authorized=true; Path=/; HttpOnly; Max-Age=86400" },
         });
       }
-      return new Response("密码错误", { status: 403 });
+      return new Response(renderLoginPage(true), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
     if (!isLogged) {
-      return new Response(renderLoginPage(PASSWORD), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+      return new Response(renderLoginPage(), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
     if (method === "POST" && url.pathname === "/api/save") {
@@ -103,7 +103,7 @@ export default {
 
         <div class="header">
           <h2 style="margin:0; font-size:1.1rem;">📓 网页笔记本</h2>
-          <a href="/logout" style="text-decoration:none; color:#8e8e93; font-size:13px;">退出</a>
+          <a href="/logout" style="text-decoration:none; color:#ff3b30; font-size:13px;"><h3>退出</h3></a>
         </div>
         
         <div class="editor-box">
@@ -133,8 +133,6 @@ export default {
             const listEl = document.getElementById('list');
             document.getElementById('sortMenu').style.display = 'none';
             document.getElementById('currentSortText').innerText = settings.isDesc ? '↓' : '↑';
-
-            // 修正：星标置顶核心逻辑 (b.pinned - a.pinned)
             const sortedNotes = notes.map((item, index) => ({...item, originalIndex: index}))
               .sort((a, b) => {
                 if (a.pinned !== b.pinned) return b.pinned ? 1 : -1;
@@ -172,8 +170,6 @@ export default {
           }
 
           window.onclick = function() { document.getElementById('sortMenu').style.display = 'none'; }
-
-          // 修正后的展开逻辑：通过 Class 切换，不依赖 render 刷新，防止事件丢失
           function toggle(index) { 
             const el = document.getElementById('item-'+index);
             el.classList.toggle('active');
@@ -249,14 +245,14 @@ export default {
   },
 };
 
-function renderLoginPage(correctPassword) {
+function renderLoginPage(hasError = false) {
   return `
   <!DOCTYPE html>
   <html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 网页笔记本</title>
+    <title>网页笔记本 - 登录</title>
     <style>
       body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f7; }
       .card { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
@@ -267,25 +263,18 @@ function renderLoginPage(correctPassword) {
   </head>
   <body>
     <div class="card">
-      <h3 style="margin:0">🔒 私密笔记本</h3>
+      <h2 style="margin:0">🔒 私密笔记本</h2>
       <div id="err"></div>
-      <form id="loginForm" action="/login" method="POST" onsubmit="return check(event)">
+      <form action="" method="POST">
         <input type="password" id="pw" name="password" placeholder="请输入密码" required autofocus>
         <button type="submit">进入</button>
       </form>
     </div>
     <script>
-      function check(e) {
-        const input = document.getElementById('pw');
-        if (input.value !== "${correctPassword}") {
-          e.preventDefault(); 
-          document.getElementById('err').innerText = "密码错误！";
-          input.value = "";
-          return false;
-        }
-        return true;
-      }
-    </script>
+  if ("${hasError}" === "true") {
+    document.getElementById('err').innerText = "密码错误！";
+  }
+</script>
   </body>
   </html>
   `;
