@@ -5,28 +5,58 @@ export default {
     const url = new URL(request.url);
     const method = request.method;
     const cookie = request.headers.get("Cookie") || "";
-    const isLogged = cookie.includes("authorized=true");
+    async function checkAuth(cookieHeader) {
+      const match = cookieHeader.match(/auth_token=([^;]+)/);
+      if (!match) return false;
+      const token = match[1];
+      return !!(await NOTES_KV.get("session_" + token));
+    }
+
+    let isLogged = await checkAuth(cookie);
+if (!isLogged && cookie.includes("auth_token=")) {
+  return new Response("登录已过期", {
+    status: 302,
+    headers: {
+      "Location": "/",
+      "Set-Cookie": "auth_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
+    }
+  });
+}
 
     if (url.pathname === "/logout") {
+      const token = (cookie.match(/auth_token=([^;]+)/) || [])[1];
+      if (token) await NOTES_KV.delete("session_" + token);
       return new Response("退出中...", {
         status: 302,
-        headers: { "Location": "/", "Set-Cookie": "authorized=; Path=/; HttpOnly; Max-Age=0" },
+        headers: {
+          "Location": "/",
+          "Set-Cookie": "auth_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
+        },
       });
     }
 
-    if (method === "POST") {
+    if (method === "POST" && request.headers.get("Content-Type")?.includes("application/x-www-form-urlencoded")) {
       const formData = await request.formData();
       if (formData.get("password") === PASSWORD) {
+        const token = crypto.randomUUID();
+        await NOTES_KV.put("session_" + token, "1", { expirationTtl: 86400 });
         return new Response("OK", {
           status: 302,
-          headers: { "Location": "/", "Set-Cookie": "authorized=true; Path=/; HttpOnly; Max-Age=86400" },
+          headers: {
+            "Location": "/",
+            "Set-Cookie": `auth_token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400`
+          },
         });
       }
-      return new Response(renderLoginPage(true), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+      return new Response(renderLoginPage(true), {
+        headers: { "Content-Type": "text/html;charset=UTF-8" },
+      });
     }
 
     if (!isLogged) {
-      return new Response(renderLoginPage(), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+      return new Response(renderLoginPage(), {
+        headers: { "Content-Type": "text/html;charset=UTF-8" },
+      });
     }
 
     if (method === "POST" && url.pathname === "/api/save") {
@@ -38,7 +68,7 @@ export default {
 
     const rawData = await NOTES_KV.get("structured_notes") || "[]";
     const rawSettings = await NOTES_KV.get("app_settings") || '{"isDesc": true}';
-    
+
     return new Response(
       `
       <!DOCTYPE html>
@@ -88,6 +118,35 @@ export default {
           .btn-cancel { border-right: 1px solid #e5e5ea; color: #007aff; }
           .btn-confirm { color: #ff3b30; font-weight: 600; }
           #status { text-align: center; font-size: 12px; color: #8e8e93; margin: 10px 0; height: 15px; }
+          .insert-link-btn {
+          width: 100%;
+          background: #f0f0f5;
+          color: #007aff;
+          border: 1px solid #ddd;
+          padding: 10px;
+          border-radius: 10px;
+          font-weight: 500;
+          font-size: 15px;
+          cursor: pointer;
+          margin-bottom: 10px;}
+          #link-modal-overlay {
+          position: fixed; top:0; left:0; width:100%; height:100%;
+          background: rgba(0,0,0,0.3); backdrop-filter: blur(5px);
+          display: none; justify-content: center; align-items: center; z-index: 1000;}
+          .link-modal {
+          background: white; width: 90%; max-width: 360px; border-radius: 14px;
+          overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 20px;}
+          .link-modal h3 { margin: 0 0 15px; font-size: 17px; text-align: center; }
+          .link-modal input {
+          width: 100%; padding: 12px; margin-bottom: 12px;
+          border: 1px solid #ddd; border-radius: 10px; font-size: 15px;}
+          .link-modal-btn-group {
+          display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px;}
+          .link-modal-btn {
+          padding: 10px 18px; border-radius: 10px; border: none;
+          font-size: 15px; font-weight: 500; cursor: pointer;}
+          .btn-link-insert { background: #007aff; color: white; }
+          .btn-link-cancel { background: #f0f0f5; color: #3a3a3c; }
         </style>
       </head>
       <body>
@@ -100,6 +159,23 @@ export default {
             </div>
           </div>
         </div>
+  <div id="link-modal-overlay">
+  <div class="link-modal">
+    <h3>插入链接</h3>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+      <label style="font-size:14px; color:#8e8e93; white-space:nowrap; min-width:70px;">链接地址(URL)</label>
+      <input type="text" id="link-url" placeholder="https://xxx.xxx.xxx/xxx" style="flex:1; margin-bottom:0;">
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+      <label style="font-size:14px; color:#8e8e93; white-space:nowrap; min-width:70px;">显示名称</label>
+      <input type="text" id="link-text" placeholder="" style="flex:1; margin-bottom:0;">
+    </div>
+    <div class="link-modal-btn-group">
+      <button class="link-modal-btn btn-link-cancel" onclick="closeLinkModal()">取消</button>
+      <button class="link-modal-btn btn-link-insert" onclick="insertLink()">插入</button>
+    </div>
+  </div>
+</div>
 
         <div class="header">
           <h2 style="margin:0; font-size:1.1rem;">📓 网页笔记本</h2>
@@ -109,6 +185,7 @@ export default {
         <div class="editor-box">
           <input type="text" id="title" placeholder="笔记标题...">
           <textarea id="content" placeholder="内容..."></textarea>
+          <button class="insert-link-btn" onclick="showInsertLinkModal()">🔗 插入链接</button>
           <button class="add-btn" id="mainBtn" onclick="handleMainBtnClick()">保存新笔记</button>
           <div id="status"></div>
         </div>
@@ -176,15 +253,60 @@ export default {
           }
           
           async function sync(onlySettings = false) {
-            document.getElementById('status').innerText = "同步中...";
-            const payload = onlySettings ? { settings } : { notes, settings };
-            await fetch('/api/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-            document.getElementById('status').innerText = "已保存";
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = "同步中...";
+            statusEl.style.color = "#8e8e93";
+            statusEl.style.cursor = "";
+            statusEl.onclick = null;
+            try {
+              const payload = onlySettings ? { settings } : { notes, settings };
+              const res = await fetch('/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              if (!res.ok) throw new Error('服务器错误');
+              statusEl.innerText = "已保存";
+            } catch (e) {
+              statusEl.innerText = "保存失败，点击重试";
+              statusEl.style.color = "#ff3b30";
+              statusEl.style.cursor = "pointer";
+              statusEl.onclick = () => sync(onlySettings);
+            }
           }
+          function showInsertLinkModal() {
+          document.getElementById('link-modal-overlay').style.display = 'flex';
+          document.getElementById('link-url').focus();
+}
+          function closeLinkModal() {
+          document.getElementById('link-modal-overlay').style.display = 'none';
+          document.getElementById('link-url').value = '';
+          document.getElementById('link-text').value = '';
+}
+          function insertLink() {
+          const urlInput = document.getElementById('link-url');
+          const textInput = document.getElementById('link-text');
+          let url = urlInput.value.trim();
+          let text = textInput.value.trim();
+
+          if (!url) return;
+          if (!text) text = url;
+
+          url = url.replace(/"/g, '&quot;');
+          text = text.replace(/"/g, '&quot;');
+
+          const linkHtml = '<a href="' + url + '">' + text + '</a>';
+          const textarea = document.getElementById('content');
+
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const before = textarea.value.substring(0, start);
+          const after = textarea.value.substring(end);
+          textarea.value = before + linkHtml + after;
+          textarea.selectionStart = textarea.selectionEnd = start + linkHtml.length;
+          textarea.focus();
+
+          closeLinkModal();}
 
           function handleMainBtnClick() {
             const t = document.getElementById('title');
