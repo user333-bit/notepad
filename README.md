@@ -1,14 +1,18 @@
-📓 网页笔记本：一个基于 Cloudflare Workers + KV 存储的超轻量私密笔记本。
+📓 网页笔记本：
 
-✨ 功能特性
-- 📱 响应式设计：完美适配手机端，带有 iOS 风格交互。
-- 🔒 私密访问：内置密码访问锁，保护隐私。
-- 📌 星标置顶：重要笔记一键置顶，黄色高亮显示。
-- ✎ 实时编辑：支持对已保存内容的二次修改。
-- 🗑 现代化删除：iOS 风格红色垃圾桶及二次确认弹窗。
-- ↕️ 智能排序：支持最新/最早排序，并自动同步偏好。
+一个基于 Cloudflare Workers 和 KV 构建的、轻量且极其流畅的现代化个人网页笔记本。
+支持密码访问、响应式 iOS 风格 UI、笔记置顶、全局快速搜索以及富文本链接插入等功能。
 
-🚀 快速部署教程：
+## ✨ 功能特性
+
+* **🔒 私密访问**：内置安全登录拦截，支持会话过期与主动登出，安全守护个人隐私。
+* **📌 置顶功能**：重要笔记一键置顶（★），不再迷失在长列表中。
+* **🔍 实时搜索**：支持标题与内容的全局关键词秒级过滤。
+* **↕️ 灵活排序**：支持“最新优先（倒序）”与“最早优先（正序）”自由切换。
+* **🔗 智能链接**：可在标题或内容中一键精准插入超链接。
+* **📱 极简高密度布局**：无凌乱的块状堆叠，完美适配手机端与 PC 端。
+
+## 🛠️ 部署指南：
 必做：1.打开dash.cloudflare.com
 2.登录你的帐号
 3.打开Compute-Workers and Pages
@@ -21,8 +25,17 @@
 10.回到Compute-Workers and Pages-notepad，点绑定，点添加绑定，点KV 命名空间，点添加绑定，变量名称填NOTES_KV，KV命名空间选刚才创建的NOTES_KV，点添加绑定
 11.点设置，找到变量和机密，点右边的添加：变量名称填PASSWORD 值填你想要的密码，然后点右下角部署
 选做：在设置里找到域和路由，点右边的添加：点自定义域，框里输入你的域名或子域名，然后点右下角添加域
+🎉 大功告成！现在访问你的Worker域名，输入密码即可开始使用你的私密笔记本！
 成品展示：🫡
-<img width="1440" height="698" alt="image" src="https://github.com/user-attachments/assets/103a032c-5248-45f0-8d79-0ba2f7bc6ba1" />
-<img width="1444" height="698" alt="image" src="https://github.com/user-attachments/assets/bf38a290-1d3d-4838-8ffd-372cc85ce936" />
-<img width="1440" height="698" alt="image" src="https://github.com/user-attachments/assets/8cbc9a3b-af3d-40ac-9d4b-90274b092138" />
-<img width="1440" height="698" alt="image" src="https://github.com/user-attachments/assets/055a0b42-3102-49cc-bcc8-95836591c564" />
+<img width="1440" height="775" alt="image" src="https://github.com/user-attachments/assets/a1825624-2d10-432e-8e21-f32e7c7084c8" />
+<img width="1440" height="774" alt="image" src="https://github.com/user-attachments/assets/f8618767-9337-4da8-94c1-6a10a3d16ac3" />
+<img width="1440" height="773" alt="image" src="https://github.com/user-attachments/assets/b38827c8-f6ad-4707-808a-96dfa77fa7a2" />
+<img width="1440" height="774" alt="image" src="https://github.com/user-attachments/assets/7d16292a-d028-4e67-a09c-e7572db1aa08" />
+<img width="1440" height="777" alt="image" src="https://github.com/user-attachments/assets/c38c15aa-1ad4-4e98-b33a-b437a7c19454" />
+<img width="1440" height="776" alt="image" src="https://github.com/user-attachments/assets/0c92e7ef-cd1d-45de-a4ec-8c6921c50f68" />
+<img width="1440" height="774" alt="image" src="https://github.com/user-attachments/assets/c2dee74b-653d-442b-a689-cf6b9938f808" />
+<img width="1440" height="774" alt="image" src="https://github.com/user-attachments/assets/ad63e1c7-72c5-4cd5-bc7f-0f5462f4a4f2" />
+<img width="1440" height="777" alt="image" src="https://github.com/user-attachments/assets/a6d5a9f1-3f90-4e7b-9da3-a0f1027fc8b2" />
+<img width="1440" height="775" alt="image" src="https://github.com/user-attachments/assets/1906fcf0-ab49-4faf-b112-3d40eb47c335" />
+<img width="1440" height="776" alt="image" src="https://github.com/user-attachments/assets/60f9fbf9-389f-4290-a7ed-02f9f615e17e" />
+更多功能请大家自己部署后查看！
