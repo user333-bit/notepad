@@ -84,7 +84,6 @@ if (!isLogged && cookie.includes("auth_token=")) {
           .editor-box { background: #fff; padding: 20px; border-bottom: 1px solid #eee; }
           input, textarea { width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 16px; outline: none; display: block; }
           textarea { height: 100px; resize: none; }
-          .add-btn { width: 100%; background: #007aff; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 16px; cursor: pointer; }
           .update-mode { background: #34c759; }
           
           .controls { padding: 12px 20px; display: flex; justify-content: flex-end; position: relative; }
@@ -147,6 +146,7 @@ if (!isLogged && cookie.includes("auth_token=")) {
           font-size: 15px; font-weight: 500; cursor: pointer;}
           .btn-link-insert { background: #007aff; color: white; }
           .btn-link-cancel { background: #f0f0f5; color: #3a3a3c; }
+          .note-content a, .note-title a { color: #007aff !important; text-decoration: underline !important; }
         </style>
       </head>
       <body>
@@ -177,103 +177,162 @@ if (!isLogged && cookie.includes("auth_token=")) {
   </div>
 </div>
 
-        <div class="header">
-          <h2 style="margin:0; font-size:1.1rem;">📓 网页笔记本</h2>
-          <a href="/logout" style="text-decoration:none; color:#ff3b30; font-size:13px;"><h3>退出</h3></a>
-        </div>
-        
-        <div class="editor-box">
-          <input type="text" id="title" placeholder="笔记标题...">
-          <textarea id="content" placeholder="内容..."></textarea>
-          <button class="insert-link-btn" onclick="showInsertLinkModal()">🔗 插入链接</button>
-          <button class="add-btn" id="mainBtn" onclick="handleMainBtnClick()">保存新笔记</button>
-          <div id="status"></div>
-        </div>
-
-        <div class="controls">
-            <div class="sort-btn" onclick="toggleMenu(event)">排序方式 <span id="currentSortText">↓</span></div>
-            <div class="sort-menu" id="sortMenu">
-                <div onclick="setSort(true)">最新优先 (倒序)</div>
-                <div onclick="setSort(false)">最早优先 (正序)</div>
+        <div id="mainView" class="view-section">
+          <div class="header">
+            <h2 style="margin:0; font-size:1.1rem;">📓 网页笔记本</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <span onclick="openEditor()" style="color:#007aff; font-size:13px; font-weight:bold; cursor:pointer;"><h3>新建笔记</h3></span>
+              <a href="/logout" style="text-decoration:none; color:#ff3b30; font-size:13px;"><h3>退出</h3></a>
             </div>
+          </div>
+
+          <div class="controls" style="padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative;">
+              <input type="text" id="search-input" placeholder="🔍 搜索标题或内容..." oninput="render()" style="display: inline-block !important; width: 60% !important; max-width: 200px !important; margin: 0 !important; padding: 6px 12px !important; font-size: 14px !important; background: #e5e5ea !important; border: none !important; border-radius: 10px !important; height: 32px !important; box-sizing: border-box !important;">
+              <div class="sort-btn" onclick="toggleMenu(event)" style="flex-shrink: 0; margin: 0 !important; height: 32px !important; box-sizing: border-box !important; display: flex; align-items: center;">排序方式 <span id="currentSortText">↓</span></div>
+              
+              <div class="sort-menu" id="sortMenu">
+                  <div onclick="setSort(true)">最新优先(倒序↓)</div>
+                  <div onclick="setSort(false)">最早优先(正序↑)</div>
+              </div>
+          </div>
+
+          <div id="list"></div>
         </div>
 
-        <div id="list"></div>
+        <div id="toast-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.05); display: none; justify-content: center; align-items: center; z-index: 9999;">
+          <div style="background: rgba(28, 28, 30, 0.96); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 22px 36px; border-radius: 16px; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div id="toastIcon" style="font-size: 32px; margin-bottom: 8px;"></div>
+            <div id="toastText" style="font-size: 16px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px;"></div>
+          </div>
+        </div>
+
+        <div id="editorView" style="display: none;">
+          <div class="header">
+            <h3 style="margin:0; font-size:1.1rem;" id="editorPanelTitle">📓 新建笔记</h3>
+            <span onclick="closeEditor()" style="color:#ff3b30; font-size:13px; font-weight:bold; cursor:pointer;"><h3>取消</h3></span>
+          </div>
+          
+          <div class="editor-box">
+            <input type="text" id="title" placeholder="笔记标题..." onfocus="lastActiveInput = this">
+            <textarea id="content" placeholder="内容..." style="height: 250px; resize: none;" onfocus="lastActiveInput = this"></textarea>
+            <button class="insert-link-btn" onclick="showInsertLinkModal()">🔗 插入链接</button>
+            <button class="add-btn" id="mainBtn" onclick="handleMainBtnClick()" style="width: 100%; background: #007aff; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 15px;">保存新笔记</button>
+          </div>
+        </div>
 
         <script>
-          let notes = ${rawData};
+          let rawData = ${rawData}; 
+          let notes = Array.isArray(rawData) ? rawData : [];
           let settings = ${rawSettings};
           let pendingDeleteIndex = null;
           let editingIndex = null;
+          let lastActiveInput = null;
 
           function render() {
-            const listEl = document.getElementById('list');
-            document.getElementById('sortMenu').style.display = 'none';
-            document.getElementById('currentSortText').innerText = settings.isDesc ? '↓' : '↑';
-            const sortedNotes = notes.map((item, index) => ({...item, originalIndex: index}))
-              .sort((a, b) => {
-                if (a.pinned !== b.pinned) return b.pinned ? 1 : -1;
-                return settings.isDesc ? (b.originalIndex - a.originalIndex) : (a.originalIndex - b.originalIndex);
-              });
-            
-            listEl.innerHTML = sortedNotes.map((item) => \`
-              <div class="note-item \${item.pinned ? 'pinned' : ''}" id="item-\${item.originalIndex}">
-                <div class="note-header" onclick="toggle(\${item.originalIndex})">
-                  <span class="note-arrow">▶</span>
-                  <span class="note-title">\${item.title}</span>
-                  <div class="btn-group">
-                    <span class="icon-btn edit-btn" onclick="event.stopPropagation(); startEdit(\${item.originalIndex})">✎</span>
-                    <span class="icon-btn pin-btn" onclick="event.stopPropagation(); togglePin(\${item.originalIndex})">\${item.pinned ? '★' : '☆'}</span>
-                    <div class="icon-btn del-btn-ios" onclick="event.stopPropagation(); showDeleteModal(\${item.originalIndex})">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </div>
-                  </div>
-                </div>
-                <div class="note-content">\${item.content}</div>
-              </div>
-            \`).join('');
-          }
+  const listEl = document.getElementById('list');
+  if (!listEl) return;
+  
+  document.getElementById('sortMenu').style.display = 'none';
+  document.getElementById('currentSortText').innerText = settings.isDesc ? '↓' : '↑';
 
-          function toggleMenu(e) {
-            e.stopPropagation();
-            const menu = document.getElementById('sortMenu');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-          }
+  let displayNotes = notes.map((item, index) => ({ ...item, originalIndex: index }));
+  displayNotes.sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return settings.isDesc ? (b.originalIndex - a.originalIndex) : (a.originalIndex - b.originalIndex);
+  });
 
-          async function setSort(val) {
-            settings.isDesc = val;
-            render();
-            await sync(true);
-          }
+  const keyword = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
+  let html = '';
+  let count = 0;
 
-          window.onclick = function() { document.getElementById('sortMenu').style.display = 'none'; }
-          function toggle(index) { 
-            const el = document.getElementById('item-'+index);
-            el.classList.toggle('active');
-          }
-          
-          async function sync(onlySettings = false) {
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = "同步中...";
-            statusEl.style.color = "#8e8e93";
-            statusEl.style.cursor = "";
-            statusEl.onclick = null;
-            try {
-              const payload = onlySettings ? { settings } : { notes, settings };
-              const res = await fetch('/api/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-              });
-              if (!res.ok) throw new Error('服务器错误');
-              statusEl.innerText = "已保存";
-            } catch (e) {
-              statusEl.innerText = "保存失败，点击重试";
-              statusEl.style.color = "#ff3b30";
-              statusEl.style.cursor = "pointer";
-              statusEl.onclick = () => sync(onlySettings);
-            }
-          }
+  for (let i = 0; i < displayNotes.length; i++) {
+    try {
+      const item = displayNotes[i];
+      if (!item) continue;
+
+      const itemTitle = (item.title || '').toLowerCase();
+      const itemContent = (item.content || '').toLowerCase();
+      if (keyword && !(itemTitle.includes(keyword) || itemContent.includes(keyword))) {
+        continue;
+      }
+      
+      count++;
+      const originalIdx = item.originalIndex;
+      const pinnedClass = item.pinned ? ' pinned' : '';
+      
+      html += '<div class="note-item' + pinnedClass + '" id="item-' + originalIdx + '">';
+      html += '  <div class="note-header" onclick="toggle(' + originalIdx + ')">';
+      html += '    <span class="note-arrow">▶</span>';
+      html += '    <span class="note-title">' + (item.title || '无标题') + '</span>';
+      html += '    <div class="btn-group">';
+      html += '      <span class="icon-btn edit-btn" onclick="event.stopPropagation(); startEdit(' + originalIdx + ')">✎</span>';
+      html += '      <span class="icon-btn pin-btn" onclick="event.stopPropagation(); togglePin(' + originalIdx + ')">' + (item.pinned ? '★' : '☆') + '</span>';
+      html += '      <div class="icon-btn del-btn-ios" onclick="event.stopPropagation(); showDeleteModal(' + originalIdx + ')">';
+      html += '        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '  </div>';
+      html += '  <div class="note-content">' + (item.content || '无内容') + '</div>';
+      html += '</div>';
+      
+    } catch (e) {
+      console.error("渲染单条笔记出错:", e);
+    }
+  }
+
+  if (count === 0) {
+    html = '<div style="text-align:center; padding:50px; color:#8e8e93;">暂无笔记</div>';
+  }
+  
+  listEl.innerHTML = html;
+}
+
+const toggleMenu = (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('sortMenu');
+  if (menu) menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+};
+
+const setSort = async (val) => {
+  settings.isDesc = val;
+  render();
+  try {
+    await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: settings }) 
+    });
+  } catch(e) { console.error(e); }
+};
+
+window.onclick = () => {
+  const menu = document.getElementById('sortMenu');
+  if (menu) menu.style.display = 'none';
+};
+
+const toggle = (index) => {
+  const el = document.getElementById('item-' + index);
+  if (el) el.classList.toggle('active');
+};
+    async function sync(customNotes) {
+    const dataToSend = customNotes || notes;
+
+    if (!Array.isArray(dataToSend)) {
+        console.error("⚠️ 异常数据警报：", dataToSend);
+    }
+
+    try {
+        const res = await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: dataToSend })
+        });
+        return res.ok;
+    } catch (e) {
+        console.error("同步异常:", e);
+        return false;}}
+
           function showInsertLinkModal() {
           document.getElementById('link-modal-overlay').style.display = 'flex';
           document.getElementById('link-url').focus();
@@ -296,45 +355,115 @@ if (!isLogged && cookie.includes("auth_token=")) {
           text = text.replace(/"/g, '&quot;');
 
           const linkHtml = '<a href="' + url + '">' + text + '</a>';
-          const textarea = document.getElementById('content');
+          const targetInput = lastActiveInput || document.getElementById('content');
 
-          const start = textarea.selectionStart;
-          const end = textarea.selectionEnd;
-          const before = textarea.value.substring(0, start);
-          const after = textarea.value.substring(end);
-          textarea.value = before + linkHtml + after;
-          textarea.selectionStart = textarea.selectionEnd = start + linkHtml.length;
-          textarea.focus();
-
+          const start = targetInput.selectionStart;
+          const end = targetInput.selectionEnd;
+          const before = targetInput.value.substring(0, start);
+          const after = targetInput.value.substring(end);
+          targetInput.value = before + linkHtml + after;
+          targetInput.selectionStart = targetInput.selectionEnd = start + linkHtml.length;
+          targetInput.focus();
           closeLinkModal();}
+
+          function showToast(icon, text) {
+            const overlay = document.getElementById('toast-overlay');
+            document.getElementById('toastIcon').innerText = icon;
+            document.getElementById('toastText').innerText = text;
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+              overlay.style.display = 'none';
+            },999);
+          }
+
+          function openEditor() {
+            editingIndex = null;
+            document.getElementById('editorPanelTitle').innerText = "📓 新建笔记";
+            const btn = document.getElementById('mainBtn');
+            btn.innerText = "保存新笔记";
+            btn.style.background = "#007aff";
+            btn.classList.remove('update-mode');
+            document.getElementById('title').value = '';
+            document.getElementById('content').value = '';
+
+            document.getElementById('mainView').style.display = 'none';
+
+            const listEl = document.getElementById('list');
+            if (listEl) listEl.style.display = 'none';
+
+            document.getElementById('editorView').style.display = 'block';
+            window.scrollTo({ top: 0 });
+          }
+
+          function closeEditor() {
+            document.getElementById('list').style.display = 'block';
+            document.getElementById('editorView').style.display = 'none';
+            document.getElementById('mainView').style.display = 'block';
+
+            const listEl = document.getElementById('list');
+            if (listEl) listEl.style.display = 'block';
+            
+            editingIndex = null;
+            window.scrollTo({ top: 0 });
+          }
 
           function handleMainBtnClick() {
             const t = document.getElementById('title');
             const c = document.getElementById('content');
-            if(!t.value.trim()) return;
-
-            if(editingIndex !== null) {
-              notes[editingIndex].title = t.value;
-              notes[editingIndex].content = c.value;
-              editingIndex = null;
-              document.getElementById('mainBtn').innerText = "保存新笔记";
-              document.getElementById('mainBtn').classList.remove('update-mode');
-            } else {
-              notes.push({ title: t.value, content: c.value, pinned: false });
+            if (!t.value.trim() || !c.value.trim()) {
+              showToast("⚠️", "请填写标题和内容");
+              return;
             }
-            
-            t.value = ''; c.value = '';
-            render(); sync();
-          }
 
-          function startEdit(index) {
+            let isEdit = (editingIndex !== null);
+            let nextNotes = JSON.parse(JSON.stringify(notes));
+            
+            if (isEdit) {
+              nextNotes[editingIndex].title = t.value;
+              nextNotes[editingIndex].content = c.value;
+            } else {
+              nextNotes.push({ title: t.value, content: c.value, pinned: false });
+            }
+
+            sync(nextNotes).then(success => {
+              if (success) {
+            notes = nextNotes;
+            t.value = ''; c.value = '';
+            closeEditor(); 
+            document.getElementById('list').style.display = 'block';
+                
+                if (isEdit) {
+                  editingIndex = null;
+                  showToast("✅", "笔记修改成功");
+                } else {
+                  showToast("✅", "笔记保存成功");
+                }
+                
+                render();
+              } else {
+                if (isEdit) {
+                  showToast("❌", "笔记修改失败，请重试");
+                } else {
+                  showToast("❌", "笔记保存失败，请重试");
+                }
+              }
+            });
+        }
+
+            function startEdit(index) {
             editingIndex = index;
+            document.getElementById('editorPanelTitle').innerText = "📝 修改笔记";
             document.getElementById('title').value = notes[index].title;
             document.getElementById('content').value = notes[index].content;
+            
             const btn = document.getElementById('mainBtn');
             btn.innerText = "更新此笔记";
+            btn.style.background = "#34c759"; 
             btn.classList.add('update-mode');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            document.getElementById('mainView').style.display = 'none';
+            document.getElementById('editorView').style.display = 'block';
+            window.scrollTo({ top: 0 });
           }
 
           function togglePin(index) {
@@ -352,11 +481,21 @@ if (!isLogged && cookie.includes("auth_token=")) {
           }
           document.getElementById('confirmDeleteBtn').onclick = function() {
             if(pendingDeleteIndex !== null) {
-              notes.splice(pendingDeleteIndex, 1);
-              render(); sync(); closeModal();
+              let nextNotes = JSON.parse(JSON.stringify(notes));
+              nextNotes.splice(pendingDeleteIndex, 1);
+              closeModal();
+
+              sync(nextNotes).then(success => {
+                if (success) {
+                  notes = nextNotes;
+                  showToast("✅", "笔记删除成功");
+                  render();
+                } else {
+                  showToast("❌", "笔记删除失败，请重试");
+                }
+              });
             }
           };
-
           render();
         </script>
       </body>
