@@ -12,21 +12,24 @@
 * **🔗 智能链接**：可在标题或内容中一键精准插入超链接。
 * **📱 极简高密度布局**：无凌乱的块状堆叠，完美适配手机端与 PC 端。
 
-## 🛠️ 部署指南：
-必做：1.打开dash.cloudflare.com
-2.登录你的帐号
-3.打开Compute-Workers and Pages
-4.点右上角的创建应用程序-从 Hello World! 开始
-5.Worker name填notepad，然后点部署
-6.点右上角的编辑代码
-7.将左侧代码全部替换为notepad code.js里的代码，并点右上角的部署
-8.打开存储和数据库-Workers KV
-9.点右上角Create Instance，命名空间名称填NOTES_KV
-10.回到Compute-Workers and Pages-notepad，点绑定，点添加绑定，点KV 命名空间，点添加绑定，变量名称填NOTES_KV，KV命名空间选刚才创建的NOTES_KV，点添加绑定
-11.点设置，找到变量和机密，点右边的添加：变量名称填PASSWORD 值填你想要的密码，然后点右下角部署
-选做：在设置里找到域和路由，点右边的添加：点自定义域，框里输入你的域名或子域名，然后点右下角添加域
-🎉 大功告成！现在访问你的Worker域名，输入密码即可开始使用你的私密笔记本！
-成品展示：🫡
+### 🛠️ 部署指南：
+
+**必做：**
+1. 打开 `dash.cloudflare.com`
+2. 登录你的帐号
+3. 打开 `Compute` - `Workers and Pages`
+4. 点右上角的 **创建应用程序** - **从 Hello World! 开始**
+5. `Worker name` 填 `notepad`，然后点 **部署**
+6. 点右上角的 **编辑代码**
+7. 将左侧代码全部替换为 `notepad code.js` 里的代码，并点右上角的 **部署**
+8. 打开 **存储和数据库** - `Workers KV`
+9. 点右上角 **Create Instance**，命名空间名称填 `NOTES_KV`
+10. 回到 `Compute` - `Workers and Pages` - `notepad`，点 **绑定**，点 **添加绑定**，点 **KV 命名空间**，点 **添加绑定**，变量名称填 `NOTES_KV`，KV命名空间选刚才创建的 `NOTES_KV`，点 **添加绑定**
+11. 点 **设置**，找到 **变量和机密**，点右边的 **添加**：变量名称填 `PASSWORD` 值填你想要的密码，然后点右下角 **部署**
+**选做：**
+* 在设置里找到 **域和路由**，点右边的 **添加**：点 **自定义域**，框里输入你的域名或子域名，然后点右下角 **添加域**
+🎉 **大功告成！** 现在访问你的Worker域名，输入密码即可开始使用你的私密笔记本！
+**成品展示：**🫡
 <img width="1440" height="775" alt="image" src="https://github.com/user-attachments/assets/a1825624-2d10-432e-8e21-f32e7c7084c8" />
 <img width="1440" height="774" alt="image" src="https://github.com/user-attachments/assets/f8618767-9337-4da8-94c1-6a10a3d16ac3" />
 <img width="1440" height="773" alt="image" src="https://github.com/user-attachments/assets/b38827c8-f6ad-4707-808a-96dfa77fa7a2" />
