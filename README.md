@@ -26,9 +26,14 @@
 9. 点右上角 **Create Instance**，命名空间名称填 `NOTES_KV`，点`创建`
 10. 回到 `计算` - `Workers and Pages` - `notepad`，点 **绑定**，点 **添加绑定**，点 **KV 命名空间**，点 **添加绑定**，变量名称填 `NOTES_KV`，KV命名空间选刚才创建的 `NOTES_KV`，点 **添加绑定**
 11. 点 **设置**，找到 **变量和机密**，点右边的 **添加**：变量名称填 `PASSWORD`，值填你想要的密码，然后点右下角 **部署**
+
 **选做：**
+
 * 点 **域**，点 **添加域名**：点你想要当notepad的域名，框里输入你想要的子域名（只输前缀）或不输，然后点右下角 **添加域名**
+
 🎉 **大功告成！** 现在访问你的Worker域名，输入密码即可开始使用你的私密笔记本！
+
+
 **成品展示：**🫡
 <img width="1440" height="775" alt="image" src="https://github.com/user-attachments/assets/a1825624-2d10-432e-8e21-f32e7c7084c8" />
 <img width="1440" height="774" alt="image" src="https://github.com/user-attachments/assets/f8618767-9337-4da8-94c1-6a10a3d16ac3" />
